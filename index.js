@@ -21,13 +21,14 @@ app.get("/api/flavors", async (req, res, next) => {
 app.post("/api/flavors", async (req, res, next) => {
   try {
     const SQL = `
-    INSERT INTO flavors (flavor_name, ranking)
-    VALUES($1, $2)
+    INSERT INTO flavors (flavor_name, ranking, is_favorite)
+    VALUES($1, $2, $3)
     RETURNING *;
     `;
     const response = await client.query(SQL, [
       req.body.flavor_name,
       req.body.ranking,
+      req.body.is_favorite,
     ]);
     res.send(response.rows[0]);
   } catch (err) {
@@ -38,13 +39,14 @@ app.put("/api/flavors/:id", async (req, res, next) => {
   try {
     const SQL = `
     UPDATE flavors
-    SET flavor_name=$1, ranking=$2, updated_at=now()
+    SET flavor_name=$1, ranking=$2, updated_at=now(), is_favorite=$4
     WHERE id=$3 RETURNING *
   `;
     const response = await client.query(SQL, [
       req.body.flavor_name,
       req.body.ranking,
       req.params.id,
+      req.body.is_favorite,
     ]);
     res.send(response.rows[0]);
   } catch (err) {
@@ -74,14 +76,15 @@ const init = async () => {
     created_at TIMESTAMP DEFAULT now(),
     updated_at TIMESTAMP DEFAULT now(),
     ranking INTEGER DEFAULT 3 NOT NULL,
-    flavor_name VARCHAR(255) NOT NULL
+    flavor_name VARCHAR(255) NOT NULL,
+    is_favorite BOOLEAN DEFAULT FALSE
   );
   `;
   await client.query(SQL);
   console.log("tables created");
   SQL = `
   INSERT INTO flavors(flavor_name, ranking) VALUES('strawberry', 5);
-  INSERT INTO flavors(flavor_name, ranking) VALUES('kiwi', 4);
+  INSERT INTO flavors(flavor_name, ranking, is_favorite) VALUES('kiwi', 4, true);
   INSERT INTO flavors(flavor_name, ranking) VALUES('chocolate', 2);
 `;
   await client.query(SQL);
